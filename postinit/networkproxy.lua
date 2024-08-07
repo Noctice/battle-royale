@@ -5,14 +5,14 @@ function NetworkProxy.ViewNetProfile()
     -- do nothing
 end
 
--- ziwbi: 加入服务器宣告，改为匿名
+-- ziwbi: 加入服务器宣告，改为匿名，统一颜色
 function Networking_JoinAnnouncement(name, colour)
-    Networking_Announcement(string.format(STRINGS.UI.NOTIFICATION.JOINEDGAME, STRINGS.UI.SERVERADMINSCREEN.UNKNOWN_USER_NAME), colour, "join_game")
+    Networking_Announcement(string.format(STRINGS.UI.NOTIFICATION.JOINEDGAME, STRINGS.UI.SERVERADMINSCREEN.UNKNOWN_USER_NAME), nil, "join_game")
 end
 
 -- 离开，改动同上
 function Networking_LeaveAnnouncement(name, colour)
-    Networking_Announcement(string.format(STRINGS.UI.NOTIFICATION.LEFTGAME, STRINGS.UI.SERVERADMINSCREEN.UNKNOWN_USER_NAME), colour, "leave_game")
+    Networking_Announcement(string.format(STRINGS.UI.NOTIFICATION.LEFTGAME, STRINGS.UI.SERVERADMINSCREEN.UNKNOWN_USER_NAME), nil, "leave_game")
 end
 
 local function anonymise_data(client)
@@ -26,6 +26,7 @@ local function anonymise_data(client)
         display_name = display_name .. " " .. (STRINGS.NAMES[string.upper(client.prefab)] or STRINGS.CHARACTER_NAMES.unknown) -- 加上角色名
     end
 
+    client._actual_name = client.name
     client.name = display_name
     client.equip = {}
 end

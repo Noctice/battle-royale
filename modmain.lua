@@ -40,7 +40,9 @@ AddPrefabPostInit("world", function(inst)
     if not inst.ismastersim then
         return
     end
-    inst:AddComponent("whitelisted")
+    if GetModConfigData("whitelisted") then
+        inst:AddComponent("whitelisted")
+    end
 end)
 AddPrefabPostInit("forest_network", function(inst)
     inst:AddComponent("worldcharacterselectlobby")
@@ -217,7 +219,7 @@ end
 
 modimport("postinit/screens/playerstatusscreen")
 modimport("postinit/widgets/playeravatarpopup")
-modimport("postinit/thenet")
+modimport("postinit/networkproxy")
 modimport("postinit/chathistory")
 
 return

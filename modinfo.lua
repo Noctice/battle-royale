@@ -1,4 +1,4 @@
-name = "battle royale/大逃杀"
+name = ChooseTranslationTable({"Battle Royale", zh = "大逃杀"})
 description = [[
 修改自mod制作者 月 的毒圈mod
 已取得原作者允许]]
@@ -30,4 +30,16 @@ server_filter_tags = {
 
 
 -- mod设置选项
-configuration_options = {}
+configuration_options = {
+	{
+        name = "whitelisted",
+        label = ChooseTranslationTable({"Whitelist", zh = "白名单"}),
+        hover = ChooseTranslationTable({"Use a whitelist, needs to be added manually.", zh = "启用白名单（需要手动添加）"}),
+        options =
+        {
+            {description = ChooseTranslationTable({"Yes", zh = "是"}), data = true},
+            {description = ChooseTranslationTable({"No", zh = "否"}), data = false},
+        },
+        default = true,
+    },
+}

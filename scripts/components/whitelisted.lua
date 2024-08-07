@@ -21,12 +21,15 @@ return Class(function(self, inst)
 --[[ Private member functions ]]
 --------------------------------------------------------------------------
 
-    local function OnPlayerJoined(src, player)
+    local function OnPlayerJoined(player)
         if IsPlayerWhitelisted(player) then
             return
         end
 
-        c_announce(string.format("%s 不在白名单上, 踢出", player.userid))
+        local user_table = TheNet:GetClientTableForUser(player.userid)
+        c_announce(string.format("%s(%s) 不在白名单上, 踢出", user_table._actual_name, user_table.userid))
+        print("角色:", STRINGS.NAMES[string.upper(user_table.prefab)],"Steam用户名:", user_table._actual_name,
+            "Steam ID:", user_table.netid, "KUID:", user_table.userid)
         TheNet:Ban(player.userid)
     end
 
@@ -34,8 +37,14 @@ return Class(function(self, inst)
 --[[ Initialization ]]
 --------------------------------------------------------------------------
     for _, player in pairs(AllPlayers) do
-        OnPlayerJoined(nil, player)
+        OnPlayerJoined(player)
     end
 
-    self.inst:ListenForEvent("ms_playerjoined", OnPlayerJoined)
+    local mt = {
+        __newindex = function(t, k, v)
+            OnPlayerJoined(v) -- __newindex 元方法会在列表添加元素时调用
+        end
+    }
+
+    setmetatable(AllPlayers, mt)
 end)

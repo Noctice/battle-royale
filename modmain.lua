@@ -12,31 +12,6 @@ GLOBAL.GetGameModeProperty = function(setting, ...)
     return _GetGameModeProperty(setting, ...)
 end
 
-local TheNet_idx = getmetatable(TheNet).__index
-if TheNet_idx then
-    local old_GetClientTable = TheNet_idx.GetClientTable
-    TheNet_idx.GetClientTable = function(self)
-        local data = old_GetClientTable(self)
-        for k, client in ipairs(data) do
-            if client --[[and client.performance == nil]] then
-                client.name = STRINGS.NAMES[string.upper(client.prefab)] or STRINGS.CHARACTER_NAMES.unknown
-                client.equip = {}
-            end
-        end
-        return data
-    end
-    local old_GetClientTableForUser = TheNet_idx.GetClientTableForUser
-    TheNet_idx.GetClientTableForUser = function(self, userid)
-        local client = old_GetClientTableForUser(self, userid)
-        if client then
-            client.name = STRINGS.NAMES[string.upper(client.prefab)] or STRINGS.CHARACTER_NAMES.unknown
-            client.equip = {}
-        end
-        return client
-    end
-end
-
-
 PrefabFiles = {"poison_miasma_cloud_fx"}
 Assets = {
     Asset("SHADER", "shaders/ui_round.ksh"),

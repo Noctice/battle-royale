@@ -1,9 +1,7 @@
 GLOBAL.setfenv(1, GLOBAL)
 
-local TheNet_index = getmetatable(TheNet).__index
-
 -- ziwbi: 查看玩家主頁的接口
-function TheNet_index.ViewNetProfile()
+function NetworkProxy.ViewNetProfile()
     -- do nothing
 end
 
@@ -32,8 +30,8 @@ local function anonymise_data(client)
     client.equip = {}
 end
 
-local _GetClientTable = TheNet_index.GetClientTable
-function TheNet_index:GetClientTable()
+local _GetClientTable = NetworkProxy.GetClientTable
+function NetworkProxy:GetClientTable()
     local data = _GetClientTable(self)
     for k, client in ipairs(data) do
         anonymise_data(client)
@@ -41,8 +39,8 @@ function TheNet_index:GetClientTable()
     return data
 end
 
-local _GetClientTableForUser = TheNet_index.GetClientTableForUser
-function TheNet_index:GetClientTableForUser(userid)
+local _GetClientTableForUser = NetworkProxy.GetClientTableForUser
+function NetworkProxy:GetClientTableForUser(userid)
     local client = _GetClientTableForUser(self, userid)
     anonymise_data(client)
     return client

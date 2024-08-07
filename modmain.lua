@@ -40,6 +40,7 @@ AddPrefabPostInit("world", function(inst)
     if not inst.ismastersim then
         return
     end
+    inst:AddComponent("whitelisted")
 end)
 AddPrefabPostInit("forest_network", function(inst)
     inst:AddComponent("worldcharacterselectlobby")

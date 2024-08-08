@@ -9,33 +9,8 @@ GLOBAL.GetGameModeProperty = function(setting, ...)
     if setting == "lobbywaitforallplayers" then
         return true
     end
-    return _GetGameModeProperty(gamemode, ...)
+    return _GetGameModeProperty(setting, ...)
 end
-
-local TheNet_idx = getmetatable(TheNet).__index
-if TheNet_idx then
-    local old_GetClientTable = TheNet_idx.GetClientTable
-    TheNet_idx.GetClientTable = function(self)
-        local data = old_GetClientTable(self)
-        for k, client in ipairs(data) do
-            if client --[[and client.performance == nil]] then 
-                client.name = STRINGS.NAMES[string.upper(client.prefab)] or "未知人物"
-                client.equip = {}
-            end
-        end
-        return data
-    end
-    local old_GetClientTableForUser = TheNet_idx.GetClientTableForUser
-    TheNet_idx.GetClientTableForUser = function(self, userid)
-        local client = old_GetClientTableForUser(self, userid)
-        if client then
-            client.name = STRINGS.NAMES[string.upper(client.prefab)] or "未知人物"
-            client.equip = {}
-        end
-        return client
-    end
-end
-
 
 PrefabFiles = {"poison_miasma_cloud_fx"}
 Assets = {
@@ -64,6 +39,9 @@ AddPrefabPostInit("world", function(inst)
     inst:AddComponent("poisonfxmanager_pc")
     if not inst.ismastersim then
         return
+    end
+    if GetModConfigData("whitelisted") then
+        inst:AddComponent("whitelisted")
     end
 end)
 AddPrefabPostInit("forest_network", function(inst)
@@ -161,7 +139,7 @@ if TheNet:GetServerIsClientHosted() or TheNet:GetIsClient() then
         end
 
         -- 重新设置安全区了 手动更新一下
-        TheWorld:ListenForEvent("onminimapshrink", function() 
+        TheWorld:ListenForEvent("onminimapshrink", function()
             self:setBig()
             self:setSmall()
         end)
@@ -172,63 +150,76 @@ local Grid = require "widgets/grid"
 local Widget = require "widgets/widget"
 
 AddClassPostConstruct( "widgets/waitingforplayers", function(self)
-	-- Dynamically scales the player portraits in the waiting lobby to fit the number of connected players.
-	self.UpdatePlayerListing = function()
-		local screen_width = 900--520--560--639.32--750--812 -- This was found through testing
-		local screen_height = 450
-		local widget_scalar = 0.43
-		local widget_width = widget_scalar*324--125
-		local widget_height = widget_scalar*511--250
-		local offset_width = 110.68--250--125
-		local offset_height = 30 + 20
-		local col = 0
-		local row = 1
-		local scalar = 3
-		local scalar_percent_increment = 0.005
+    -- Dynamically scales the player portraits in the waiting lobby to fit the number of connected players.
+    self.UpdatePlayerListing = function()
+        local screen_width = 900--520--560--639.32--750--812 -- This was found through testing
+        local screen_height = 450
+        local widget_scalar = 0.43
+        local widget_width = widget_scalar*324--125
+        local widget_height = widget_scalar*511--250
+        local offset_width = 110.68--250--125
+        local offset_height = 30 + 20
+        local col = 0
+        local row = 1
+        local scalar = 3
+        local scalar_percent_increment = 0.005
 
-		local player_count = TheNet:GetDefaultMaxPlayers()
-		while col*row < player_count do
-			col = col + 1
-			-- Find the next scalar
-			local next_scalar = scalar
-			local count = 0
-			while (col * (widget_width + offset_width) - offset_width) * next_scalar > screen_width or ((widget_height + offset_height) * row - offset_height)*next_scalar > screen_height do
-				count = count + 1
-				next_scalar = scalar*(1 - scalar_percent_increment*count)
-			end
-			scalar = next_scalar
-			-- If the current player badge is smaller than the size it would be if another row is added then add another row instead of a column.
-			if ((widget_height + offset_height) * (row + 1) - offset_height)*scalar < screen_height then
-				row = row + 1
-				col = col - 1
-				scalar = 2 / row
-			end
-		end
-		-- Remove any leftover column space from recent new rows.
-		while (col - 1)*row >= player_count do
-			col = col - 1
-		end
-		-- Scale each widget based on number of max players
-		for i,widget in pairs(self.player_listing) do
-			if i <= player_count then
-				widget:SetScale(scalar)
-				widget:Show()
-			else
-				widget:Hide()
-			end
-		end
-		-- Clear and Update grid based on amount of players
-		local old_grid = self.list_root
-		self.list_root = self.proot:AddChild(Grid())
-		self.list_root:FillGrid(col, (widget_width + offset_width) * scalar, (widget_height + offset_height) * scalar, self.player_listing)
-		self.list_root:SetPosition(-(widget_width + offset_width) * scalar * (col - 1)/2, (widget_height + offset_height)*scalar*(row - 1)/2 + 20)
-		old_grid:Kill()
-	end
-	self:UpdatePlayerListing()
+        local player_count = TheNet:GetDefaultMaxPlayers()
+        while col*row < player_count do
+            col = col + 1
+            -- Find the next scalar
+            local next_scalar = scalar
+            local count = 0
+            while (col * (widget_width + offset_width) - offset_width) * next_scalar > screen_width or ((widget_height + offset_height) * row - offset_height)*next_scalar > screen_height do
+                count = count + 1
+                next_scalar = scalar*(1 - scalar_percent_increment*count)
+            end
+            scalar = next_scalar
+            -- If the current player badge is smaller than the size it would be if another row is added then add another row instead of a column.
+            if ((widget_height + offset_height) * (row + 1) - offset_height)*scalar < screen_height then
+                row = row + 1
+                col = col - 1
+                scalar = 2 / row
+            end
+        end
+        -- Remove any leftover column space from recent new rows.
+        while (col - 1)*row >= player_count do
+            col = col - 1
+        end
+        -- Scale each widget based on number of max players
+        for i,widget in pairs(self.player_listing) do
+            if i <= player_count then
+                widget:SetScale(scalar)
+                widget:Show()
+            else
+                widget:Hide()
+            end
+        end
+        -- Clear and Update grid based on amount of players
+        local old_grid = self.list_root
+        self.list_root = self.proot:AddChild(Grid())
+        self.list_root:FillGrid(col, (widget_width + offset_width) * scalar, (widget_height + offset_height) * scalar, self.player_listing)
+        self.list_root:SetPosition(-(widget_width + offset_width) * scalar * (col - 1)/2, (widget_height + offset_height)*scalar*(row - 1)/2 + 20)
+        old_grid:Kill()
+    end
+    self:UpdatePlayerListing()
 end)
 
 
 
+local _modimport = modimport
+---@param path string
+function modimport(path)
+    if not path:find(".lua") then
+        return _modimport(path .. ".lua")
+    else
+        return _modimport(path)
+    end
+end
 
+modimport("postinit/screens/playerstatusscreen")
+modimport("postinit/widgets/playeravatarpopup")
+modimport("postinit/networkproxy")
+modimport("postinit/chathistory")
 
 return
